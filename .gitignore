@@ -1,0 +1,6 @@
+# 可重新生成的中间缓存
+.cache/
+outputs/
+
+# macOS
+.DS_Store
