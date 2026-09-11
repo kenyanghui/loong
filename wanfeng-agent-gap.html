@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>万丰大模型｜金融Agent操作系统 — 代码与目标差距分析</title>
+<style>
+:root {
+  --bg:#f5f6f8; --card:#fff; --ink:#1f2430; --muted:#6b7280; --line:#e3e6eb;
+  --accent:#2563eb; --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+  --ink-soft:#3f485a; --code-bg:#f3f4f6;
+}
+* { box-sizing:border-box; }
+body { margin:0; font:14px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--ink); }
+header { background:#fff; border-bottom:1px solid var(--line); padding:24px 28px 18px; }
+h1 { margin:0 0 8px; font-size:23px; letter-spacing:-.2px; }
+.sub { color:var(--muted); font-size:13px; }
+.sub b { color:var(--ink-soft); font-weight:600; }
+.wrap { max-width:1180px; margin:0 auto; padding:22px 24px 72px; }
+
+h2 { font-size:17px; margin:34px 0 12px; padding-top:22px; border-top:1px solid var(--line); }
+h2:first-of-type { border-top:none; padding-top:0; margin-top:20px; }
+h3 { font-size:14px; margin:22px 0 8px; color:var(--ink-soft); }
+p { margin:10px 0; }
+
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:10px; margin:16px 0 4px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:13px 15px; }
+.card b { display:block; font-size:23px; margin-top:3px; line-height:1.2; font-variant-numeric:tabular-nums; }
+.card span { color:var(--muted); font-size:12px; }
+.card.warn b { color:var(--warn); }
+.card.bad b { color:var(--bad); }
+.card.ok b { color:var(--ok); }
+
+.verdict { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:8px; padding:16px 20px; margin:18px 0; }
+.verdict p { margin:0; }
+.verdict p + p { margin-top:10px; }
+
+.notice { background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:11px 15px; margin:14px 0; font-size:13px; color:#92400e; }
+.notice.blue { background:#eff6ff; border-color:#bfdbfe; color:#1e40af; }
+
+.tw { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:14px 0 6px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+table { width:100%; border-collapse:collapse; font-size:13px; min-width:660px; }
+th { background:#f0f2f5; text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:600; }
+td { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:#f8fafc; }
+td.k { white-space:nowrap; font-weight:600; color:var(--ink-soft); }
+td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+.badge { display:inline-block; padding:2px 9px; border-radius:11px; font-size:12px; font-weight:600; white-space:nowrap; }
+.b-ok   { background:#dcfce7; color:#15803d; }
+.b-near { background:#dbeafe; color:#1d4ed8; }
+.b-part { background:#fef3c7; color:#b45309; }
+.b-bad  { background:#fee2e2; color:#b91c1c; }
+
+code { background:var(--code-bg); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:12px;
+       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color:#334155; }
+pre { background:#1e293b; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow-x:auto; font-size:12.5px; line-height:1.55;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre .c { color:#94a3b8; }
+pre .g { color:#86efac; }
+pre .r { color:#fca5a5; }
+
+ul, ol { margin:10px 0; padding-left:22px; }
+li { margin:5px 0; }
+
+.claim { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:15px 18px; margin:12px 0; }
+.claim h4 { margin:0 0 8px; font-size:13.5px; }
+.claim h4 .n { display:inline-block; width:20px; height:20px; line-height:20px; text-align:center; border-radius:5px;
+                background:var(--accent); color:#fff; font-size:11.5px; margin-right:8px; vertical-align:1px; }
+.claim p { margin:6px 0; font-size:13px; }
+.claim .fix { color:var(--muted); font-size:12.5px; }
+
+.foot { color:var(--muted); font-size:12px; margin-top:34px; padding-top:16px; border-top:1px solid var(--line); }
+.foot p { margin:5px 0; }
+a { color:var(--accent); }
+
+nav.crumb { font-size:12.5px; color:var(--muted); margin-bottom:10px; }
+nav.crumb a { text-decoration:none; }
+nav.crumb a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+<header>
+<h1>万丰大模型｜金融Agent操作系统 — 代码与目标差距分析</h1>
+<div class="sub">
+分析对象 <b>wanfeng-agent-platform</b> 源码快照 ｜ 对照目标 <b>《万丰大模型｜金融Agent操作系统》</b> ｜ 分析日期 2026-09-11
+</div>
+</header>
+
+<div class="wrap">
+<nav class="crumb"><a href="./">← 返回玄龙冰毒点汇总</a></nav>
+
+<div class="verdict">
+<p><b>一句话结论：</b>目标文档描述的是一套六层能力齐备的「金融 Agent 操作系统」；代码里实际存在的是一个<b>契约先行、治理扎实、但数据面与产品面尚未接通</b>的工程底座。</p>
+<p>在 18 万行 Python、143 个测试文件、3,875 条用例的工程量里，真正跑在生产路径上的只有 <b>Agent Runtime</b> 与 <b>治理三件套</b>（RBAC／审批／审计），外加一条 <b>A 股分钟数据研究链路</b>。目标文档的三大核心指标与「跨 A/H/US」「行业轮动」「策略蒸馏」「知识库 Memory」，在代码里要么被显式关闭、要么硬编码为 <code>unavailable</code>、要么背后根本没有数据。</p>
+</div>
+
+<div class="cards">
+  <div class="card"><span>Python 代码行</span><b>180,667</b></div>
+  <div class="card"><span>server.py 单文件</span><b>17,745</b></div>
+  <div class="card warn"><span>契约层占比（quant_engine）</span><b>~30%</b></div>
+  <div class="card"><span>测试文件 / 用例</span><b>143 / 3,875</b></div>
+  <div class="card bad"><span>发布回归门覆盖文件</span><b>63 / 143</b></div>
+  <div class="card bad"><span>9 条产品轨道已完成</span><b>0</b></div>
+</div>
+
+<h2>一、六层能力逐层判定</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:15%">目标能力</th><th>代码实态</th><th style="width:12%">判定</th></tr></thead>
+<tbody>
+<tr>
+  <td class="k">① 主动式 Agent Runtime</td>
+  <td>真 ReAct 循环（<code>agent_model_loop.py</code>，<code>max_iterations=8</code>、原生 tool_calls + 文本 JSON 回退、错误回灌）；真持久化队列（SQLite WAL <code>BEGIN IMMEDIATE</code> / PG <code>FOR UPDATE SKIP LOCKED</code>、租约+心跳+退避+死信）；真 SSE（<b>逐 token</b> delta、事件落库、cursor 续传）；注册 46 个工具</td>
+  <td><span class="badge b-ok">生产级</span></td>
+</tr>
+<tr>
+  <td class="k">② 财富配置</td>
+  <td><code>AGENT_FOLIO_PORT = DisabledFolioPort()</code>，docstring 原文：<i>“Fail-closed placeholder while private Folio data ingestion is unavailable.”</i> 契约层硬编码 <code>attribution: HISTORICAL_SNAPSHOT_NOT_ACCEPTED</code>、<code>sector_exposure: P14_NOT_ACCEPTED</code>；<code>performance.py</code> 直接返回占位串 <code>"pending_industry_history"</code>；再平衡「求解器」是逐 bp 削顶循环（只能减不能加）。真实可用的只有 legacy 基金净值分析，自标 <code>nav_based_proxy_not_trade_attribution</code></td>
+  <td><span class="badge b-bad">空壳</span></td>
+</tr>
+<tr>
+  <td class="k">③ 市场与个股研究</td>
+  <td>markets／sectors／equities 三域全部 <code>enabled=False</code> + 零 IO 网关（调用即 <code>AssertionError("disabled markets Gateway must remain unreachable")</code>）。<code>rotation</code> 是过形状校验的 blob，从不计算；7 个 section 共用一个「公式」= 5 键小数位配置。数据只覆盖 <b>1 个交易日</b>、只有 sh/hk 两个市场 → 轮动在结构上不可能</td>
+  <td><span class="badge b-bad">空壳</span></td>
+</tr>
+<tr>
+  <td class="k">④ 主观策略蒸馏</td>
+  <td><code>llm_distiller.py</code> 的因子是硬编码字面量（<code>"0.35*zscore(momentum_20d)+…"</code>），<code>backtest_logic_python</code> 引用不存在的字段且从不被编译执行；策略版本 = 一行 JSON；「回测引擎」<code>engine.py</code> 吃外部预算好的 NAV CSV，不做信号与撮合；真实的因子引擎（IC/ICIR/分层/GP）藏在 <code>incubator/</code> 且平台从不调用</td>
+  <td><span class="badge b-bad">空壳</span></td>
+</tr>
+<tr>
+  <td class="k">⑤ 知识库与 Memory</td>
+  <td>Memory 是每会话一个 JSON ring buffer，<code>prefetch(query)</code> 根本不使用 <code>query</code>；无向量、无跨会话、无冲突消解；<b>会议纪要零代码</b>。项目自己的 <code>knowledge_asset_registry.json</code> 把研报库／私域 Memory 标为 <code>missing + blocked</code>。唯一真实的是定时调度器</td>
+  <td><span class="badge b-bad">空壳</span></td>
+</tr>
+<tr>
+  <td class="k">⑥ 金融级治理</td>
+  <td>RBAC 逐 <b>173 条路由</b>核验真实执行（中间件 + 依赖注入双层）、租户隔离完整、审批是执行前真 gate 且参数哈希绑定不可换参重放、沙箱 AST 白名单真实。缺口：审计<b>无防篡改</b>（无哈希链／WORM）</td>
+  <td><span class="badge b-near">准生产</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>二、目标文档里逐条对不上的宣称</h2>
+
+<div class="claim">
+<h4><span class="n">1</span>核心指标是落地页的硬编码 HTML</h4>
+<p><code>100亿+ 数据行级资产 / 50,000+ 研究任务 / 1,000+ 策略版本</code> —— 与仓库 <code>landing/index.html:69-71</code> 完全一致，无任何数据绑定。</p>
+<p>仓库里 <code>data/</code> 只有一个 104KB 的分类树 JSON，<b>无数据文件、无 manifest、无统计输出</b>。项目自己的发布说明写的真实规模是「<b>日线缓存 144 行、8 只标的</b>」。</p>
+</div>
+
+<div class="claim">
+<h4><span class="n">2</span>技术栈五缺二</h4>
+<p><code>PostgreSQL</code> 真 · <code>SSE</code> 真 · <code>MongoDB</code> 适配器真但<b>未接运行时</b>。</p>
+<p><code>DuckDB</code> 全仓<b>零代码</b>（还有一个测试专门断言不许 import 它）；<code>pgvector</code> 全仓<b>零使用</b>——唯一痕迹是 <code>knowledge_assets.py:19</code> 一个 <code>"vector_index"</code> 枚举字符串和落地页文案。</p>
+</div>
+
+<div class="claim">
+<h4><span class="n">3</span>跨 A/H/US 不存在</h4>
+<p><code>港股 / 美股 / nasdaq / nyse</code> 在 Python 里<b>零命中</b>；美股只有 SEC 当日公告。所谓「映射到同一个研究空间」只存在于 <code>InstrumentId</code> 身份层，数据层没有统一 schema。</p>
+<p class="fix">数据实况：sector／ticker 快照仅 <b>1 个交易日</b>、仅 <b>sh / hk</b> 两个市场；231 个 L3 分组每组恰好 1 个观测。</p>
+</div>
+
+<div class="claim">
+<h4><span class="n">4</span>「可复算事实」基本不成立</h4>
+<p>全库无 <code>recompute / verify / replay</code>；有的是内容寻址哈希——能<b>发现篡改</b>，不能<b>重算数值</b>。唯一真正可复算的是 69 行的 <code>FinancialSelectionReceipt</code>。</p>
+</div>
+
+<div class="claim">
+<h4><span class="n">5</span>「0 黑箱」是文档里兑现得最好的一句</h4>
+<p>A 股链路真的建模了 <code>evidence</code> / <code>execution_path</code>（6 步）/ <code>limitations</code> / <code>private_reasoning_exposed=False</code>。</p>
+<p class="fix">但边界在 API 层破了：<code>GET /api/agent/runs/{id}</code> 会原样返回 <code>thought</code> 字段，「不展示思维链」只在 UI 渲染层成立。</p>
+</div>
+
+<h2>三、项目自己的自评（比对外文案诚实）</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:34%">来源</th><th>原文 / 数据</th></tr></thead>
+<tbody>
+<tr><td class="k">project_status.json</td><td>9 条轨道 <code>formal_status</code> <b>无一条 completed</b>：agent=partial，market／wealth／mom／factor-mining／experience=<b>planned</b>，backtest／data／release=partial</td></tr>
+<tr><td class="k">RELEASE_NOTES.md 0.2.0</td><td>「本版本只交付 P10 专业基础，<b>不声明 Markets、Sectors、Equities、Folio 用户产品功能已经完成</b>」</td></tr>
+<tr><td class="k">同文件（真实规模）</td><td>「日线缓存 144 行、8 只标的」；「外部历史分钟、实时分钟和<b>研究证据空库</b>」</td></tr>
+<tr><td class="k">docs/AGENT_PRODUCT_P10.md</td><td>“Keep the flag disabled for the release baseline.” → P10 默认关闭（<code>AGENT_PRODUCT_V1_ENABLED=false</code>，端点直接 404）</td></tr>
+<tr><td class="k">前端能力栅格<br><span style="font-weight:400;color:var(--muted)">index.html:1289</span></td><td>P14 Sectors · P15 Equities · P16 Folio · P17 Proactive · P18 Memory/Vision · P19 Provider/Notify · P20 Release <b>全部渲染为 <code>unavailable · coming later</code></b></td></tr>
+<tr><td class="k">路线图</td><td>P10–P21 共 12 个阶段，已交付 P10 且默认关闭</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>四、最值得警惕的：不是「没做完」，而是「做成了两套」</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:26%">现象</th><th>证据</th></tr></thead>
+<tbody>
+<tr><td class="k">两套并行数据访问</td><td>严格契约版适配器（envelope／质量门／血缘，341 个测试真通过）<b>只在测试里被调用</b>；<code>server.py</code> 运行时另有一套内联 <code>pymysql.connect()</code> / <code>MongoClient()</code>（5+ 处），<b>绕过全部契约</b></td></tr>
+<tr><td class="k">契约层是「可执行规格书」</td><td><code>agent_sectors_contracts.py</code> 5,171 行中约 88% 是 schema／校验／常量，真业务逻辑 <b>0%</b>；<code>*_contracts.py</code> 合计 23,008 行，占 quant_engine 约 30%</td></tr>
+<tr><td class="k">工具注册表宣称了被禁用的能力</td><td>46 个 canonical 工具含 <code>agent_markets_*</code> / <code>agent_folio_*</code>，模型能看到、能调用，但会撞上 <code>enabled=False</code> 网关抛异常</td></tr>
+<tr><td class="k">CI 不跑产品测试</td><td>3 个 workflow 全是治理（建 Issue、状态投影、仓库策略），只跑 6 个测试文件 + <code>compileall</code>；仓库有 143 个测试文件</td></tr>
+<tr><td class="k">量化核心完全无测试</td><td><code>grep -rln "BACKTEST_ENGINE\|run_nav_backtest\|ExecutionModel" tests/</code> → <b>零命中</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>五、真正做出来了的</h2>
+<ol>
+<li><b>Agent Runtime</b> —— 真循环 + 持久化队列 + 逐 token SSE + 审批／审计／沙箱。这是整个仓库最有价值的资产，也是唯一经得起「生产级」三字的层。</li>
+<li><b>A 股研究链路</b> —— 真实只读接入 MySQL <code>base_realtime</code>（5,223 只证券分钟数据）与 Mongo <code>His_TICK_V2</code>，真实 DeepSeek run 成功过（<code>f08c7fb0…</code>）。</li>
+<li><b>治理三件套</b> —— RBAC（173 路由核验）／执行前审批（参数哈希绑定）／step 级审计。</li>
+<li><b>工程质量</b> —— fail-closed 默认、<code>source_writes=0</code> 只读硬门、内容寻址、PIT／vintage、rights gating、<b>0 个 TODO</b>、独立 Review／QA 制度。</li>
+</ol>
+
+<h2>六、全量测试实测结果</h2>
+<div class="notice blue">
+本次在 macOS / Python 3.12 独立环境复跑<b>全部 143 个测试文件</b>（非项目自定义子集）：
+<pre style="margin:10px 0 0"><span class="g">8 failed, 3827 passed, 40 skipped</span>, 9 warnings in 1630.81s (0:27:10)</pre>
+</div>
+
+<h3>6.1 项目所谓「全量」只是 63 个文件的手工清单</h3>
+<p><code>RELEASE_NOTES.md</code> 里那句「默认全量：479 passed」，对应的清单在 <code>scripts/agent_regression.py:279</code> 起，是<b>逐行枚举的 63 个测试文件</b>。仓库有 <b>143 个</b>，<b>80 个不在发布回归门内</b>，其中包括：</p>
+<ul>
+<li>整个数据层：<code>test_agent_data_mysql / data_mongo / data_contracts / data_reference / data_public</code></li>
+<li>整个领域层：<code>test_agent_equities_*</code>、<code>test_agent_equity_attribution</code>、<code>test_agent_folio_*</code>、<code>test_agent_domain_server_adapters</code></li>
+<li>A 股链路：<code>test_agent_a_share_live_server</code>、<code>test_agent_a_share_live_service</code>、<code>test_agent_a_share_market_bridge</code></li>
+</ul>
+<p><b>被排除的恰好就是那些「未接线 / enabled=False」的能力域。</b>发布门只覆盖接上线的部分——逻辑自洽，但意味着「测试全绿」覆盖不到六层里的四层。</p>
+
+<h3>6.2 8 个失败的构成</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:44%">失败用例</th><th style="width:14%">是否在发布门内</th><th>性质</th></tr></thead>
+<tbody>
+<tr><td><code>test_agent_multimodal.py::…windows_ocr…</code></td><td>在</td><td>Windows 专用实现，macOS 必失败</td></tr>
+<tr><td><code>test_agent_slo_scenario.py::…memory_probe…</code></td><td>在</td><td><code>assert 0 &gt; 0</code> — Windows 专用内存探针</td></tr>
+<tr><td><code>test_agent_a_share_live_server.py::…streaming…</code></td><td>否</td><td><b>测试与实现脱节</b>：<code>server.py:3618</code> 已改调 <code>runtime.get_session()</code>，测试替身没跟上 → <code>AttributeError</code></td></tr>
+<tr><td><code>test_project_delivery_map_integration.py::…migration_receipts</code></td><td>否</td><td><b>治理证据链漂移</b>：内容绑定回执记的 SHA-256（<code>fe6bce6b…</code>）与文件实际哈希（<code>fff5fb5f…</code>）对不上</td></tr>
+<tr><td><code>test_root_content_safety_scan.py::…exception_cli…</code></td><td>否</td><td><code>SafetyScanError: exception manifest is not currently valid</code></td></tr>
+<tr><td><code>test_profile_public_data_quality.py::…deterministic_golden</code></td><td>否</td><td>确定性 golden 不匹配</td></tr>
+<tr><td><code>test_project_delivery_map_frontend.py</code> / <code>_integration::…three_viewports</code></td><td>否</td><td>需要真实浏览器／视口</td></tr>
+</tbody>
+</table>
+</div>
+<p><b>读法：</b>这份代码确实能跑（98.8% 通过，工程严谨度是真的）；但「测试全绿」的边界比看上去窄——发布门只覆盖 63/143 个文件，且恰好排除了四层未接线的能力域；门外还存在测试与实现脱节、治理回执哈希漂移两类实质问题。</p>
+
+<h2>七、补差距的优先级</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:36%">缺口</th><th style="width:18%">工作量</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td class="k">私域持仓数据接入</td><td><span class="badge b-bad">blocker</span></td><td>现为 fail-closed 占位端口；不接就没有财富配置层</td></tr>
+<tr><td class="k">港股 / 美股数据源 + 历史长度</td><td><span class="badge b-bad">从零</span></td><td>现有数据只有 1 个交易日、2 个市场</td></tr>
+<tr><td class="k">真撮合引擎</td><td><span class="badge b-part">大</span></td><td>涨跌停／停牌／滑点／分钟-Tick 粒度；或把「回测」从产品文案中移除</td></tr>
+<tr><td class="k">因子编译器与消费端</td><td><span class="badge b-part">中</span></td><td><code>incubator/</code> 里有真货（AST 白名单编译、IC/ICIR、GP），但没有集成</td></tr>
+<tr><td class="k">Memory 向量库 + 跨会话 + 冲突消解</td><td><span class="badge b-part">中</span></td><td>纪要还需 ASR 链路（当前零代码）</td></tr>
+<tr><td class="k">前端重写</td><td><span class="badge b-part">大</span></td><td>现为 639KB 单文件原生 JS；六层里 UI 只覆盖约 1.5 层</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>八、方法、边界与可复核性</h2>
+<ul>
+<li><b>分析对象：</b>GitHub 上的 <code>wanfeng-agent-platform</code> 源码快照（361 个 <code>.py</code>、180,667 行 Python）。分析在独立目录内完成，未修改被分析的代码。</li>
+<li><b>判定口径：</b>区分三种状态——「有 schema／契约定义」「有真实计算实现」「在运行时被接线且可用」。仅在运行时被接线并真正执行的才算「可用」。表格中的「空壳」指前两者存在、第三者缺失。</li>
+<li><b>测试复跑：</b>在 macOS + Python 3.12 独立虚拟环境安装 <code>requirements-agent.txt</code> 全部依赖后，对仓库全部 143 个测试文件执行 <code>pytest</code>，得到 8 failed / 3827 passed / 40 skipped。项目声明的目标平台是 Windows，故门内 2 个平台相关失败在其目标平台上预期为通过。</li>
+<li><b>未覆盖：</b>本分析基于静态源码与测试复跑，<b>未连接生产数据库</b>（Mongo <code>His_TICK_V2</code>、MySQL <code>base_realtime</code>）、未调用真实模型供应商、未部署运行。涉及「真实数据规模」的结论以代码内自述与快照元数据为准，未经生产环境验证。</li>
+<li><b>结论时效：</b>基于 2026-09-11 的源码快照；项目处于活跃开发中，结论可能随后续提交变化。</li>
+</ul>
+
+<div class="foot">
+<p>万丰大模型｜金融Agent操作系统 — 代码与目标差距分析</p>
+<p>生成于 2026-09-11 ｜ 仅供内部技术评估参考</p>
+</div>
+</div>
+</body>
+</html>
