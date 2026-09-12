@@ -114,11 +114,12 @@ nav.crumb a:hover { text-decoration:underline; }
 </header>
 
 <div class="wrap">
-<nav class="crumb"><a href="./">← 返回玄龙冰毒点汇总</a></nav>
+<nav class="crumb"><a href="./">← 返回首页</a> ｜ <a href="./dashboard.html">玄龙冰毒点汇总</a></nav>
 
 <div class="verdict">
 <p><b>一句话结论：</b>先不要做量化。第一阶段只证明一件事 —— <b>系统能改自己</b>：Chat 里说一句话，它自己在 Gitea 开出一个 PR，人只做合并。</p>
 <p>量化的门禁、DAG 分解、多智能体评审全部<b>只留接口不实现</b>。判断第一阶段成功的标准只有一条：循环能不能转起来。接口留得对不对，决定第二部分能不能不动架构地接上去。</p>
+<p><b>定位澄清：</b>第一部分建成的是一个<b>可靠的自动化层</b>，不是"会自我进化的系统"。系统的能力上限由底层模型决定，循环次数不改变这一点；什么算"更好"由人定义，结果由人负责。详见第三部分。</p>
 </div>
 
 <div class="cards">
@@ -560,6 +561,154 @@ pipeline:
 <tr><td class="k">数据写入事故</td><td>agent 误写生产库</td><td>继承现有 <code>source_writes=0</code> 只读契约，执行沙箱化</td></tr>
 <tr><td class="k">外网暴露</td><td>当前是 loopback，对外开放后攻击面扩大</td><td>必须 TLS + 强认证；管理面与业务面分离</td></tr>
 <tr><td class="k">治理双源</td><td>GitHub/Gitea 状态漂移</td><td>见本节决策 A：单一权威源，另一侧只读</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ==================== 第三部分 ==================== -->
+<div class="part">
+  <div class="pn">第三部分 · 边界与责任</div>
+  <h2>自我改进的边界：定义权与责任都在人</h2>
+  <p class="ps">这一节界定系统<b>不做什么</b>，以及为什么。它决定了第一部分该被定位成"可靠的自动化层"，而不是"会进化的系统"。</p>
+</div>
+
+<h2>一、能不能实现代码自迭代"进化"</h2>
+<p>能，但"进化"这个词必须先拆开 —— 拆开后会看到，一半是今天就能做的工程，另一半目前不存在。</p>
+
+<div class="notice blue">
+<b>最关键的一点：吞吐 ≠ 能力。</b>循环跑起来后，系统能做的是<b>把"模型本来就会做的小改动"自动做完</b> —— 修 bug、补测试、升依赖、清告警，一天做一百件。但它不会因此比底层的 DeepSeek 更聪明。<b>跑一万轮循环，不会跑出一个模型自己想不到的架构。</b>
+</div>
+
+<div class="tw">
+<table>
+<thead><tr><th style="width:34%">会累积的</th><th>不会累积的</th></tr></thead>
+<tbody>
+<tr>
+<td><b>脚手架</b> —— 测试套件、文档、工具、提示词、历史修复库。这些确实复利增长，系统"整体"确实在变强</td>
+<td><b>能力</b> —— 遇到模型不懂的难题，循环一万次还是不懂</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<p>准确的说法是：<b>harness 会进化，模型不会。</b>而 harness 进化的天花板，就是模型的能力。</p>
+
+<h2>二、卡点在"选择"，不在"变异"</h2>
+<p>进化需要三件事：变异、选择、遗传。变异（Agent 改代码）和遗传（PR 合并、下轮基于新代码）都好办。<b>卡死在"选择"上。</b></p>
+
+<div class="notice red"><b>软件没有适应度函数。</b>这是根本困难，不是实现细节。</div>
+
+<div class="tw">
+<table>
+<thead><tr><th style="width:24%">候选适应度</th><th>为什么不行</th></tr></thead>
+<tbody>
+<tr><td class="k">单元测试</td><td><b>只能否决，不能排序。</b>测试通过 = 没搞坏，不等于变好了。它是约束，不是目标。没有梯度，搜索就没有方向</td></tr>
+<tr><td class="k">圈复杂度 / 覆盖率 / 行数</td><td><b>全部可刷。</b>任何一个拿来当目标，系统都会学会用最省事的方式刷它 —— 删代码、写空断言、堆无意义测试</td></tr>
+<tr><td class="k">"用户想要的"</td><td>需要人的判断，<b>不可自动化</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>这就是 Goodhart 定律在代码上的形态：<b>当一个指标变成目标，它就不再是好指标。</b></p>
+
+<h2>三、对比量化 —— 正好相反</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:16%"></th><th style="width:42%">代码自迭代</th><th>量化自迭代</th></tr></thead>
+<tbody>
+<tr><td class="k">适应度</td><td><b>太弱</b>（测试只能否决）</td><td><b>太强</b>（夏普是个数）</td></tr>
+<tr><td class="k">结果</td><td>无方向漂移</td><td>疯狂过拟合</td></tr>
+<tr><td class="k">危险</td><td>蠢，但安全</td><td>聪明，但亏钱</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>这个对比很说明问题：<b>量化的适应度函数异常好用，也异常危险</b> —— 正因为它是个干净的数值，搜索会全力利用它，包括利用它的漏洞。quant-gate 存在的全部理由就是这个。</p>
+
+<p>所以从"能否自我进化"看，<b>量化反而比通用代码更合适</b> —— 前提是刹车装好。</p>
+
+<h2>四、按野心分四层</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:7%">层级</th><th style="width:34%">内容</th><th style="width:20%">适应度</th><th>成立？</th></tr></thead>
+<tbody>
+<tr><td class="k">L0</td><td>人给目标，系统做完开 PR</td><td>测试</td><td><span class="badge b-ok">今天就能做</span> 可靠。<b>这是第一部分，是自动化，不是进化</b></td></tr>
+<tr><td class="k">L1</td><td>系统读自己的日志 / 报错 / 失败测试，自己提炼工单</td><td>能否复现并修掉真实故障</td><td><span class="badge b-ok">真能跑</span> 而且有用</td></tr>
+<tr><td class="k">L2</td><td>窄而可测的目标让它磨：覆盖率、类型错误、lint、依赖新鲜度、性能基准</td><td>客观、难刷</td><td><span class="badge b-near">谦虚但诚实</span> 能持续累积真实价值</td></tr>
+<tr><td class="k">L3</td><td>系统自己定义"更好"</td><td>—</td><td><span class="badge b-bad">今天做不到</span> 谁声称做到了，是在卖东西</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>五、必须防的失败模式：腐化累积</h2>
+<p>长期跑下去最真实的威胁 —— 不是"AI 造反"，而是<b>没人看得懂的代码库</b>。</p>
+
+<div class="notice red">
+每一次改动都通过了测试。五百次之后，代码局部自洽、全局混乱。<b>没有一次改动是错的，但整体已经不是任何人设计的东西了。</b>
+</div>
+
+<h3>建议写进门禁的对策</h3>
+<ul>
+<li><b>架构不变式由门禁强制</b> —— 模块依赖边界、新增依赖需人工批准</li>
+<li><b>变更预算</b> —— 限制单位时间改动速率，不让它一口气重写</li>
+<li><b>每轮都有回滚点</b></li>
+<li><b>定期人工审计累积改动</b>，不只是审单个 PR</li>
+<li><b>回归测试必须随迭代增长</b> —— 它同时是安全网和适应度来源</li>
+</ul>
+
+<h2>六、人来定义，人为结果负责</h2>
+
+<div class="notice green">
+<b>这是整套系统的基本原则，优先于前面所有技术设计。</b>
+系统的自动化程度可以提高，但<b>定义权和责任都不能转移给系统</b>。
+</div>
+
+<div class="claim">
+<h4><span class="n">1</span>定义权在人：什么算"更好"，由人定义</h4>
+<p>系统不能自己推断目标。第一阶段"更好"的定义就是人写下的验收标准；量化的"更好"是人选定的适应度函数与硬约束。系统可以<b>提出</b>候选目标，但<b>采纳与否由人决定</b>。这条堵死的正是 L3。</p>
+</div>
+
+<div class="claim">
+<h4><span class="n">2</span>责任在人：结果是人的结果，不是系统的结果</h4>
+<p>"系统自动做的"不是免责理由。策略亏了钱，是批准上线的人的责任；代码腐化了，是批准合并的人的责任。<b>自动化改变的是执行方式，不改变责任的归属。</b></p>
+</div>
+
+<div class="claim">
+<h4><span class="n">3</span>因此每一层自动化都要有具名负责人</h4>
+<p>不是"团队负责"，是<b>每一条自动化流水线、每一个门禁阈值、每一次策略上线，都要有一个具名的人对该层结果负责</b>。没有具名负责人的自动化，不应被启用。</p>
+</div>
+
+<div class="claim">
+<h4><span class="n">4</span>这不是"人在环上"，是"人在两端"</h4>
+<p><b>人在两端</b>：入口定义目标与约束，出口承担结果与责任。中间的执行过程可以完全自动。<br>
+这不同于"每个动作都要人确认" —— 那会让系统瘫痪，等于没建。<br>
+<b>人挪到两端，不是被去掉。</b></p>
+</div>
+
+<div class="tw">
+<table>
+<thead><tr><th style="width:22%">决策类型</th><th style="width:26%">谁定</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td class="k">执行</td><td><span class="badge b-ok">系统自动</span></td><td>跑测试、写代码、开分支、跑回测、生成评审报告</td></tr>
+<tr><td class="k">目标与阈值</td><td><span class="badge b-near">人定义，系统执行</span></td><td>验收标准、适应度函数、门禁阈值、变更预算</td></tr>
+<tr><td class="k">结果与责任</td><td><span class="badge b-bad">永远是人</span></td><td>合并主干、策略上线、预算分配、资源删除</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="notice blue">
+<b>底线：</b>能不能自我进化，最终取决于<b>谁来当裁判</b>。有可信裁判（测试、基准、回测）→ 在它能测量的范围内，能。没有可信裁判 → 只能靠人。这不是实现问题，是逻辑问题：<b>你无法让系统验证它自己无法验证的东西。</b>
+</div>
+
+<h2>七、对本方案的结论</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:22%">内容</th><th style="width:14%">结论</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td class="k">第一部分（L0）</td><td><span class="badge b-ok">建</span></td><td>自动化的价值是真实的。但定位应为<b>可靠的自动化层</b>，不是"会进化的系统"</td></tr>
+<tr><td class="k">L1 / L2</td><td><span class="badge b-ok">建</span></td><td>有边界、有真实收益、适应度客观</td></tr>
+<tr><td class="k">L3</td><td><span class="badge b-bad">不建</span></td><td>它会很勤奋地给你产出一堆没人看得懂的代码</td></tr>
+<tr><td class="k">量化 + quant-gate</td><td><span class="badge b-near">真正的目标</span></td><td>那里有唯一一个干净可用的适应度函数，代价是必须配一个足够严的 quant-gate</td></tr>
 </tbody>
 </table>
 </div>

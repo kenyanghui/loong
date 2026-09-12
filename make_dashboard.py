@@ -388,7 +388,7 @@ def make_dashboard(summary, chart_files):
         .replace("%RES_COUNT%", str(len(summary["resonance_points"])))
         .replace("%DATA%", payload)
     )
-    (ROOT / "index.html").write_text(html, encoding="utf-8")
+    (ROOT / "dashboard.html").write_text(html, encoding="utf-8")
 
 
 def main():
@@ -396,7 +396,7 @@ def main():
         summary = json.load(handle)
     chart_files = make_charts(summary)
     make_dashboard(summary, chart_files)
-    print(f"charts={len(chart_files)} dashboard=index.html")
+    print(f"charts={len(chart_files)} dashboard=dashboard.html")
 
 
 if __name__ == "__main__":
