@@ -276,6 +276,7 @@ a.chart:hover { text-decoration:underline; }
 <h1>全期货品种 · 五周期玄龙冰毒点完整汇总</h1>
 <div class="sub">区间 2026-01-05 ~ 2026-07-31 ｜ MID=MA(CLOSE,20) ｜ 冰毒窗口 3 根 ｜ 共振窗口 1 根 ｜ 数据：新浪期货（通达信问小达MCP对期货返回为空，按技能回退）</div>
 <div style="margin-top:9px;font-size:13px"><a href="./wanfeng-agent-gap.html" style="color:#2563eb;text-decoration:none;font-weight:600">→ 万丰大模型｜金融Agent操作系统 — 代码与目标差距分析</a></div>
+<div style="margin-top:6px;font-size:13px"><a href="./wanfeng-ai-iteration.html" style="color:#2563eb;text-decoration:none;font-weight:600">→ 万丰 AI 编程自迭代系统 — 建设方案</a></div>
 </header>
 <div class="wrap">
 <div class="cards" id="cards"></div>

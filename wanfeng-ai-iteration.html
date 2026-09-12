@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>万丰 AI 编程自迭代系统 — 建设方案</title>
+<style>
+:root {
+  --bg:#f5f6f8; --card:#fff; --ink:#1f2430; --muted:#6b7280; --line:#e3e6eb;
+  --accent:#2563eb; --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+  --ink-soft:#3f485a; --code-bg:#f3f4f6;
+}
+* { box-sizing:border-box; }
+body { margin:0; font:14px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--ink); }
+header { background:#fff; border-bottom:1px solid var(--line); padding:24px 28px 18px; }
+h1 { margin:0 0 8px; font-size:23px; letter-spacing:-.2px; }
+.sub { color:var(--muted); font-size:13px; }
+.sub b { color:var(--ink-soft); font-weight:600; }
+.wrap { max-width:1180px; margin:0 auto; padding:22px 24px 72px; }
+
+h2 { font-size:17px; margin:34px 0 12px; padding-top:22px; border-top:1px solid var(--line); }
+h2:first-of-type { border-top:none; padding-top:0; margin-top:20px; }
+h3 { font-size:14px; margin:22px 0 8px; color:var(--ink-soft); }
+p { margin:10px 0; }
+
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:10px; margin:16px 0 4px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:13px 15px; }
+.card b { display:block; font-size:23px; margin-top:3px; line-height:1.2; font-variant-numeric:tabular-nums; }
+.card span { color:var(--muted); font-size:12px; }
+.card.warn b { color:var(--warn); }
+.card.bad b { color:var(--bad); }
+.card.ok b { color:var(--ok); }
+
+.verdict { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:8px; padding:16px 20px; margin:18px 0; }
+.verdict p { margin:0; }
+.verdict p + p { margin-top:10px; }
+
+.notice { background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:11px 15px; margin:14px 0; font-size:13px; color:#92400e; }
+.notice.blue { background:#eff6ff; border-color:#bfdbfe; color:#1e40af; }
+.notice.red { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+.notice.green { background:#f0fdf4; border-color:#bbf7d0; color:#166534; }
+.notice b { font-weight:600; }
+
+.tw { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:14px 0 6px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+table { width:100%; border-collapse:collapse; font-size:13px; min-width:660px; }
+th { background:#f0f2f5; text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); white-space:nowrap; font-weight:600; }
+td { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:#f8fafc; }
+td.k { white-space:nowrap; font-weight:600; color:var(--ink-soft); }
+td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+.badge { display:inline-block; padding:2px 9px; border-radius:11px; font-size:12px; font-weight:600; white-space:nowrap; }
+.b-ok   { background:#dcfce7; color:#15803d; }
+.b-near { background:#dbeafe; color:#1d4ed8; }
+.b-part { background:#fef3c7; color:#b45309; }
+.b-bad  { background:#fee2e2; color:#b91c1c; }
+
+code { background:var(--code-bg); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:12px;
+       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color:#334155; }
+pre { background:#1e293b; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow-x:auto; font-size:12.5px; line-height:1.55;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre .c { color:#94a3b8; }
+pre .g { color:#86efac; }
+pre .r { color:#fca5a5; }
+
+ul, ol { margin:10px 0; padding-left:22px; }
+li { margin:5px 0; }
+
+.claim { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:15px 18px; margin:12px 0; }
+.claim h4 { margin:0 0 8px; font-size:13.5px; }
+.claim h4 .n { display:inline-block; width:20px; height:20px; line-height:20px; text-align:center; border-radius:5px;
+                background:var(--accent); color:#fff; font-size:11.5px; margin-right:8px; vertical-align:1px; }
+.claim p { margin:6px 0; font-size:13px; }
+.claim .fix { color:var(--muted); font-size:12.5px; }
+
+.foot { color:var(--muted); font-size:12px; margin-top:34px; padding-top:16px; border-top:1px solid var(--line); }
+.foot p { margin:5px 0; }
+a { color:var(--accent); }
+
+nav.crumb { font-size:12.5px; color:var(--muted); margin-bottom:10px; }
+nav.crumb a { text-decoration:none; }
+nav.crumb a:hover { text-decoration:underline; }
+
+/* —— 本页新增：闭环流程图 —— */
+.loop { display:flex; flex-wrap:wrap; gap:7px; margin:16px 0 8px; }
+.loop .n { flex:1 1 122px; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 13px; }
+.loop .n .s { font-size:11px; color:var(--muted); font-family:ui-monospace,Menlo,monospace; letter-spacing:.06em; }
+.loop .n .t { font-size:13px; font-weight:600; margin:2px 0 3px; }
+.loop .n .d { font-size:11.5px; color:var(--muted); line-height:1.5; }
+.loop .n.gate { border-color:#bfdbfe; background:#eff6ff; }
+.loop .n.gate .t { color:var(--accent); }
+.loop .n.human { border-color:#bbf7d0; background:#f0fdf4; }
+.loop .n.human .t { color:var(--ok); }
+
+/* —— 本页新增：不做清单 —— */
+.notdoing { display:flex; flex-wrap:wrap; gap:7px; margin:14px 0 6px; }
+.notdoing span { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 12px; font-size:12.5px;
+                 color:var(--muted); text-decoration:line-through; text-decoration-color:#fca5a5; }
+
+/* —— 本页新增：分节标题 —— */
+.part { margin-top:44px; padding-top:20px; border-top:2px solid var(--ink); }
+.part .pn { font-size:11.5px; letter-spacing:.15em; color:var(--accent); font-weight:600; font-family:ui-monospace,Menlo,monospace; }
+.part h2 { border-top:none; padding-top:4px; margin:6px 0 4px; font-size:20px; }
+.part .ps { color:var(--muted); font-size:13px; margin:0; }
+</style>
+</head>
+<body>
+<header>
+<h1>万丰 AI 编程自迭代系统 — 建设方案</h1>
+<div class="sub">
+迭代对象 <b>这套系统自己</b> ｜ 入口 <b>服务端 Web Chat</b> ｜ 代码与文档 <b>Gitea</b> ｜ 参考 <b>eightarms.net（八爪鱼 Octopus）</b> ｜ 2026-09-12
+</div>
+</header>
+
+<div class="wrap">
+<nav class="crumb"><a href="./">← 返回玄龙冰毒点汇总</a></nav>
+
+<div class="verdict">
+<p><b>一句话结论：</b>先不要做量化。第一阶段只证明一件事 —— <b>系统能改自己</b>：Chat 里说一句话，它自己在 Gitea 开出一个 PR，人只做合并。</p>
+<p>量化的门禁、DAG 分解、多智能体评审全部<b>只留接口不实现</b>。判断第一阶段成功的标准只有一条：循环能不能转起来。接口留得对不对，决定第二部分能不能不动架构地接上去。</p>
+</div>
+
+<div class="cards">
+  <div class="card"><span>最小闭环环节</span><b>7</b></div>
+  <div class="card"><span>实施步骤 / 工期</span><b>6 / 8 天</b></div>
+  <div class="card"><span>预留扩展口径</span><b>4</b></div>
+  <div class="card ok"><span>验收硬标准</span><b>1</b></div>
+  <div class="card bad"><span>自动合并</span><b>0</b></div>
+</div>
+
+<div class="notice blue">
+<b>与既有治理的关系：</b>代码权威源目前是 GitHub（见 <code>项目管理/github/EIGHT_ARMS_WORKFLOW.md</code>），本方案要求改用 Gitea —— 这是一个<b>需要拍板的冲突</b>，详见第二部分。第一阶段可先在 Gitea 建新仓库跑通，不触碰现有权威源。
+</div>
+
+<!-- ==================== 第一部分 ==================== -->
+<div class="part">
+  <div class="pn">第一部分 · 现在做</div>
+  <h2>最小闭环：让循环先转起来</h2>
+  <p class="ps">复杂能力全部只留接口、不实现。每一步都必须真实存在，但允许是最笨的实现。</p>
+</div>
+
+<h2>一、最小闭环</h2>
+
+<div class="loop">
+  <div class="n"><div class="s">01 需求</div><div class="t">Chat 输入</div><div class="d">一个 Web 输入框</div></div>
+  <div class="n"><div class="s">02 工单</div><div class="t">Gitea Issue</div><div class="d">标签 auto</div></div>
+  <div class="n"><div class="s">03 工作区</div><div class="t">git worktree</div><div class="d">隔离分支</div></div>
+  <div class="n"><div class="s">04 实现</div><div class="t">Agent 改码</div><div class="d">单 Agent 工具循环</div></div>
+  <div class="n"><div class="s">05 测试</div><div class="t">跑测试</div><div class="d">不过则回 04</div></div>
+  <div class="n human"><div class="s">06 PR</div><div class="t">人工合并</div><div class="d">永不自动</div></div>
+  <div class="n"><div class="s">07 记录</div><div class="t">工件 + 日志</div><div class="d">JSON + Markdown</div></div>
+</div>
+
+<div class="tw">
+<table>
+<thead><tr><th style="width:4%">#</th><th style="width:12%">环节</th><th>最小实现</th><th style="width:28%">不做什么</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td class="k">需求</td><td>一个 Web 输入框</td><td>不做会话管理、不做多轮</td></tr>
+<tr><td class="num">2</td><td class="k">工单</td><td>Gitea Issue，标签 <code>auto</code></td><td>不做路由表、不做 DAG</td></tr>
+<tr><td class="num">3</td><td class="k">工作区</td><td><code>git worktree add</code></td><td>不做容器隔离</td></tr>
+<tr><td class="num">4</td><td class="k">实现</td><td>单 Agent 工具调用循环</td><td>不做多智能体协作</td></tr>
+<tr><td class="num">5</td><td class="k">测试</td><td>跑仓库自带测试命令</td><td>不做覆盖率门禁</td></tr>
+<tr><td class="num">6</td><td class="k">PR</td><td>Gitea API 建 PR</td><td>不做自动合并</td></tr>
+<tr><td class="num">7</td><td class="k">记录</td><td>落一个 JSON + 一段 Markdown</td><td>不做两层工件体系</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="notice red"><b>关键约束：</b>第 6 步永远是人工合并。第一阶段不给任何自动合并权限。</div>
+
+<h2>二、架构</h2>
+<p>五个组件，单向依赖。不引入消息队列、不引入 Redis。</p>
+
+<pre>┌──────────────────────────────────────────────┐
+│  web/          Chat 入口 (FastAPI + 单页 HTML) │
+└───────────────────┬──────────────────────────┘
+                    │ 提交需求
+┌───────────────────▼──────────────────────────┐
+│  orchestrator/  循环调度器 (单进程 asyncio)    │
+│   · 状态机推进 · 重试 · 日志                   │
+└───────┬───────────────────────┬──────────────┘
+        │                       │
+┌───────▼─────────┐   ┌─────────▼──────────────┐
+│  agent/         │   │  forge/                │
+│  执行内核        │   │  Gitea 适配器           │
+│  (复用已有)      │   │  Issue / PR / 分支      │
+└───────┬─────────┘   └────────────────────────┘
+        │
+┌───────▼──────────────────────────────────────┐
+│  state/   SQLite 单文件 (工单状态 + 运行记录)   │
+└──────────────────────────────────────────────┘</pre>
+
+<p><b>为什么是 SQLite 而不是 PostgreSQL：</b>第一阶段单机单进程，SQLite 零运维。等要并发跑多工单时再换，表结构不用改。</p>
+
+<h2>三、技术选型</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:14%">层</th><th style="width:30%">选择</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td class="k">语言</td><td>Python 3.12</td><td>与 wanfeng 现有栈一致</td></tr>
+<tr><td class="k">Web</td><td>FastAPI + uvicorn</td><td>同上，已有</td></tr>
+<tr><td class="k">前端</td><td>单页 HTML + 原生 fetch</td><td>第一阶段不需要构建链</td></tr>
+<tr><td class="k">状态</td><td>SQLite</td><td>零运维</td></tr>
+<tr><td class="k">代码托管</td><td>Gitea（自建）</td><td>你的指定</td></tr>
+<tr><td class="k">模型</td><td>DeepSeek</td><td>现有单供应商，先跑通</td></tr>
+<tr><td class="k">隔离</td><td>git worktree</td><td>比容器轻，不用 Docker</td></tr>
+<tr><td class="k">Agent 内核</td><td><b>复用 <code>agent_model_loop.py</code></b></td><td>已有工具调用循环 + 证据策略 + 副作用工具策略</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="notice green"><b>不要重写 agent 内核。</b><code>agent_model_loop.py</code> 里已有工具调用循环、证据策略、副作用工具策略，直接拿来当执行层。第一阶段只需要给它接上 Gitea 工具和 shell 工具。</div>
+
+<h2>四、目录结构</h2>
+<pre>autoflow/
+├── web/
+│   └── app.py              <span class="c"># FastAPI 入口，一个 POST /task + 一个 GET /</span>
+├── orchestrator/
+│   ├── loop.py             <span class="c"># 状态机主循环</span>
+│   └── states.py           <span class="c"># 状态枚举</span>
+├── agent/
+│   ├── runner.py           <span class="c"># 包 agent_model_loop，注入工具</span>
+│   └── tools.py            <span class="c"># shell / 文件读写 / Gitea 工具</span>
+├── forge/
+│   └── gitea.py            <span class="c"># Issue、PR、分支 API 封装</span>
+├── gate/
+│   ├── base.py             <span class="g"># ★ 口径：Gate 协议</span>
+│   └── test_gate.py        <span class="c"># 第一阶段唯一实现：跑测试</span>
+├── state/
+│   ├── db.py               <span class="c"># SQLite</span>
+│   └── schema.sql
+└── config.yaml             <span class="c"># 仓库地址、模型、超时、重试次数</span></pre>
+
+<h2>五、留口径 · 四个扩展点</h2>
+
+<div class="notice"><b>本阶段最重要的产出。</b>功能可以后补，但接口现在不定义好，后面就要动大手术。量化的 <code>quant-gate</code>、多智能体评审，未来都插在这些点上。</div>
+
+<div class="claim">
+<h4><span class="n">1</span>门禁协议 <code>Gate</code></h4>
+<p>未来加 <code>quant-gate</code> 只需一行注册，不用改调度器。</p>
+<pre><span class="c"># gate/base.py</span>
+from typing import Protocol, Any
+from dataclasses import dataclass
+
+@dataclass
+class GateResult:
+    passed: bool
+    hard_fail: bool          <span class="c"># True = 直接淘汰，不参与后续打分</span>
+    score: float | None      <span class="c"># 0~1，软性评分；hard_fail 时为 None</span>
+    evidence: dict[str, Any] <span class="c"># 证据，必须可追溯</span>
+    message: str
+
+class Gate(Protocol):
+    name: str
+    def run(self, ctx: "RunContext") -&gt; GateResult: ...
+
+<span class="c"># 注册表 —— 未来加 quant-gate 只需一行</span>
+GATES: list[Gate] = []
+def register(gate: Gate) -&gt; None: GATES.append(gate)</pre>
+</div>
+
+<div class="claim">
+<h4><span class="n">2</span>适应度 <code>Fitness</code></h4>
+<p>现在不用，但循环调度器调用它的位置要留出来。</p>
+<pre>class Fitness(Protocol):
+    def score(self, ctx: "RunContext") -&gt; dict[str, float]: ...
+
+<span class="c"># 第一阶段： 返回 {"tests_passed": 1.0} 即可</span>
+<span class="c"># 未来：    {"oos_sharpe": ..., "max_drawdown": ..., "turnover": ...}</span></pre>
+</div>
+
+<div class="claim">
+<h4><span class="n">3</span>触发器 <code>Trigger</code></h4>
+<pre>class Trigger(Protocol):
+    def should_run(self) -&gt; str | None: ...   <span class="c"># 返回需求描述，None = 不触发</span>
+
+<span class="c"># 第一阶段：ManualTrigger（只有人提交才跑）</span>
+<span class="c"># 未来：    CronTrigger（定时）、EventTrigger（策略衰减信号）</span></pre>
+</div>
+
+<div class="claim">
+<h4><span class="n">4</span>工单类型 <code>RunMode</code></h4>
+<p>工单上打一个标签。现在只有一个值，但字段要存在。</p>
+<pre>class RunMode(str, Enum):
+    CODING = "coding"       <span class="c"># 第一阶段</span>
+    <span class="c"># QUANT = "quant"       # 未来：走 quant-gate</span>
+
+<span class="c"># 调度器读这个字段决定走哪套门禁链</span>
+PIPELINES = {
+    RunMode.CODING: [TestGate()],
+    <span class="c"># RunMode.QUANT: [TestGate(), QuantGate()],</span>
+}</pre>
+</div>
+
+<h2>六、实施步骤</h2>
+<p>按顺序做，每步都能单独验证。约 8 天。</p>
+
+<div class="tw">
+<table>
+<thead><tr><th style="width:9%">步骤</th><th style="width:8%">工期</th><th style="width:22%">内容</th><th>要点</th></tr></thead>
+<tbody>
+<tr>
+<td class="k">Step 1</td><td>1 天</td><td class="k">地基</td>
+<td>服务器就绪前先用本机跑通；建 <code>autoflow</code> 仓库并初始化目录；SQLite 建表 <code>tasks(id, mode, repo, branch, state, created_at, updated_at)</code>；写好 <code>config.yaml</code></td>
+</tr>
+<tr>
+<td class="k">Step 2</td><td>1 天</td><td class="k">Gitea 适配器</td>
+<td>建专用 token（只读 + 建分支/PR）；<code>forge/gitea.py</code> 实现建 Issue、建分支、提 PR、读 Issue；单独脚本验证四个 API 都通。<b>不要用账号密码，不要给 admin</b></td>
+</tr>
+<tr>
+<td class="k">Step 3</td><td>2 天</td><td class="k">执行内核接入</td>
+<td>把 <code>agent_model_loop.py</code> 包进 <code>agent/runner.py</code>；注入 <code>run_shell</code>、<code>read_file</code>、<code>write_file</code>、<code>gitea_*</code>；<b>沙箱约束</b>：工作目录锁死在 worktree 内，禁止 <code>cd ..</code>；用"改掉 README 错别字"验证</td>
+</tr>
+<tr>
+<td class="k">Step 4</td><td>2 天</td><td class="k">调度循环</td>
+<td>状态机 <code>PENDING → WORKTREE → IMPLEMENT → TEST → PR → DONE / FAILED</code>；失败重试上限 3 次，超限标 <code>FAILED</code> 并记录原因；每步落日志</td>
+</tr>
+<tr>
+<td class="k">Step 5</td><td>1 天</td><td class="k">Chat 入口</td>
+<td><code>POST /task</code> 接需求 → 建工单 → 触发循环；<code>GET /</code> 单页：输入框 + 工单列表 + 状态；不做登录（只在内网/本机）</td>
+</tr>
+<tr>
+<td class="k">Step 6</td><td>1 天</td><td class="k">自举验证</td>
+<td><b>让系统改它自己的代码</b> —— 给它一个小需求（如"给工单列表加时间倒序"），全流程走通并产出 PR。<b>这一步才算真正的验收</b></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>七、验收标准</h2>
+
+<div class="notice green"><b>唯一硬标准：</b>在 Chat 里输入一句需求，系统<b>自动在 Gitea 开出一个 PR</b>，中间无需人工干预。</div>
+
+<h3>三条底线</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:16%">检查</th><th>标准</th></tr></thead>
+<tbody>
+<tr><td class="k">可追溯</td><td>每个工单的每一步都有日志和工件，能回答"它当时为什么这么改"</td></tr>
+<tr><td class="k">失败可控</td><td>跑不通会停，不会无限重试，不会留下半成品分支</td></tr>
+<tr><td class="k">边界安全</td><td>Agent 无法写出 worktree 之外、无法推主干、无法合并 PR</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>八、明确不做的事</h2>
+<p>写下来是为了防止范围蔓延。</p>
+<div class="notdoing">
+<span>量化门禁 quant-gate（只留 Gate 接口）</span>
+<span>DAG 分解 / 多工单编排（一次只跑一个）</span>
+<span>多智能体并行评审（单 Agent）</span>
+<span>人机决策门白名单（全部人工）</span>
+<span>自动合并（永不在本阶段）</span>
+<span>容器隔离（worktree 够用）</span>
+<span>PostgreSQL 迁移（SQLite 够用）</span>
+<span>模型微调</span>
+<span>权限系统 / 多用户</span>
+</div>
+
+<h2>九、风险</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:16%">风险</th><th style="width:26%">表现</th><th>对策</th></tr></thead>
+<tbody>
+<tr><td class="k">Agent 改坏代码</td><td>提了个把项目搞崩的 PR</td><td>人合并 + 分支隔离 + 测试门禁；主干永远安全</td></tr>
+<tr><td class="k">无限循环烧 token</td><td>一个工单跑几百轮</td><td>硬性轮次上限 + 超时 + 单工单 token 预算</td></tr>
+<tr><td class="k">沙箱逃逸</td><td>写到 worktree 外</td><td>路径白名单校验；禁用 <code>cd</code>；shell 命令审计</td></tr>
+<tr><td class="k">Gitea token 泄露</td><td>写进代码或日志</td><td>token 只走环境变量；日志脱敏</td></tr>
+<tr><td class="k">半成品分支堆积</td><td>失败后分支没清理</td><td>失败即删分支，或打 <code>failed</code> 标签保留供排查</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>十、下一阶段衔接</h2>
+<p>第一阶段跑通后，<b>不动架构</b>就能扩展。</p>
+<div class="tw">
+<table>
+<thead><tr><th style="width:18%">想加的能力</th><th style="width:46%">改哪里</th><th>改动量</th></tr></thead>
+<tbody>
+<tr><td class="k">量化门禁</td><td>写 <code>QuantGate</code> 实现 <code>Gate</code>，注册进 <code>PIPELINES[RunMode.QUANT]</code></td><td><span class="badge b-ok">新增文件</span></td></tr>
+<tr><td class="k">多智能体评审</td><td>同上，写 <code>ReviewCodeGate</code></td><td><span class="badge b-ok">新增文件</span></td></tr>
+<tr><td class="k">定时自迭代</td><td>写 <code>CronTrigger</code>，替换 <code>ManualTrigger</code></td><td><span class="badge b-ok">换一个类</span></td></tr>
+<tr><td class="k">多工单并行</td><td>SQLite → PostgreSQL，worktree 已有隔离</td><td><span class="badge b-near">换存储层</span></td></tr>
+<tr><td class="k">DAG 分解</td><td>调度器前加一层分解，产出多个 task</td><td><span class="badge b-part">需动循环</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="notice blue"><b>判断口径留得对不对的标准：</b>加量化门禁时，如果发现要改 <code>orchestrator/loop.py</code>，<b>说明口径没留好</b>。</div>
+
+<h3>配置示例</h3>
+<pre><span class="c"># config.yaml</span>
+server:
+  host: 127.0.0.1      <span class="c"># 第一阶段不对外</span>
+  port: 8030
+
+gitea:
+  base_url: http://127.0.0.1:3000
+  owner: kenyang
+  repo: autoflow
+  token_env: GITEA_TOKEN   <span class="c"># 只从环境变量读，不落盘</span>
+
+agent:
+  model: deepseek-chat
+  max_turns: 30            <span class="c"># 硬性轮次上限</span>
+  timeout_seconds: 900
+  token_budget: 200000     <span class="c"># 单工单预算</span>
+
+pipeline:
+  default_mode: coding
+  retry_limit: 3
+  workspace_root: /tmp/autoflow-worktrees</pre>
+
+<!-- ==================== 第二部分 ==================== -->
+<div class="part">
+  <div class="pn">第二部分 · 以后做</div>
+  <h2>完整蓝图：接到量化上去</h2>
+  <p class="ps">第一部分跑通后再启动。这里记录的是<b>决策与边界</b>，不是排期 —— 提前写下来，是为了让第一阶段的接口留得对。</p>
+</div>
+
+<h2>一、三件必须先拍板的事</h2>
+<p>这三项会决定后面所有设计，建议在服务器到位前就有结论，避免返工。</p>
+
+<div class="claim">
+<h4><span class="n">!</span>代码权威源：GitHub 与 Gitea 互斥</h4>
+<p><code>项目管理/github/EIGHT_ARMS_WORKFLOW.md</code> 明确写着：<b>「GitHub 是源码、Issue、Milestone、PR、commit、tag、验收状态和发布状态的唯一权威源」</b>，而八爪鱼<b>「仅可单向投影，不得反向改写 GitHub，也不得成为第二权威源」</b>。本方案要求「代码和文档用 Gitea」，与这条治理铁律直接冲突 —— 必须二选一，或者重写这条治理。</p>
+<div class="tw">
+<table>
+<thead><tr><th style="width:6%">选项</th><th>含义</th><th style="width:14%">评价</th></tr></thead>
+<tbody>
+<tr><td class="num">A</td><td><b>Gitea 升为唯一权威，GitHub 降为只读镜像</b> —— 治理模型不变（仍是"单一权威源 + 只读投影"），只换权威源。现有 Issue 按 <code>wanfeng-issue-id</code> 幂等迁移，一次性成本，之后自洽</td><td><span class="badge b-ok">推荐</span></td></tr>
+<tr><td class="num">B</td><td><b>GitHub 保留权威，Gitea 只做 agent 运行面</b> —— 治理零改动，但 Gitea 沦为纯展示层，与"代码用 Gitea"的初衷不符</td><td><span class="badge b-part">次选</span></td></tr>
+<tr><td class="num">C</td><td><b>双权威并行</b> —— 两边都写必然漂移，你的治理文档已经预判了这个失败模式</td><td><span class="badge b-bad">不可取</span></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="claim">
+<h4><span class="n">!</span>部署基线：Windows → Linux</h4>
+<p>回测平台当前基线是 <code>Windows + Python 3.12 + PostgreSQL strict + DeepSeek + loopback 监听（127.0.0.1:8020）</code>，快速开始文档通篇是 PowerShell。服务器是 Linux，且要对外提供 Web 访问 —— <b>这两处都要改</b>：进程管理、路径、启动脚本，以及从 loopback 改为受控的外部监听（<b>必须加认证与 TLS，不能裸奔</b>）。</p>
+</div>
+
+<div class="claim">
+<h4><span class="n">!</span>Chat 入口的权限定位</h4>
+<p>这决定整个系统的风险上限。建议沿用八爪鱼的人机决策门分法，并结合已有的 <code>agent_approvals.py</code>：</p>
+<ul>
+<li><b>执行类可自动</b> —— 跑回测、写代码、开分支、跑测试、生成评审报告，可以白名单自动放行。</li>
+<li><b>业务决策永远人工</b> —— 合并主干、发布、动生产库、改策略上线参数、删除持久资源。<b>这条不给任何白名单覆盖。</b>量化系统涉及真金白银，建议比八爪鱼更严：连"策略进入实盘候选池"都设为人工门。</li>
+</ul>
+</div>
+
+<h2>二、你已有的资产（不用从零造）</h2>
+<p>核心思路是<b>复用执行内核、新建编排层与量化门禁</b>，而不是重写一套 agent 框架。</p>
+<div class="tw">
+<table>
+<thead><tr><th style="width:24%">已有资产</th><th style="width:30%">现状</th><th>在新架构中的角色</th></tr></thead>
+<tbody>
+<tr><td class="k"><code>agent_model_loop.py</code></td><td>工具调用循环，已内建证据策略、A股证据政策、副作用工具策略</td><td><b>直接复用为执行内核。</b>它的"副作用工具需显式意图"设计，正是人机决策门的基础</td></tr>
+<tr><td class="k"><code>agent_evaluation.py</code></td><td>四维 Judge（正确性/依据/完整/风险意识）+ 确定性权重</td><td>复用为<b>通用门禁引擎</b>；量化需在此之上扩展专门指标</td></tr>
+<tr><td class="k"><code>agent_approvals.py</code></td><td>审批机制已存在</td><td>人机决策门的现成骨架</td></tr>
+<tr><td class="k"><code>agent_cron.py</code> / <code>agent_automation.py</code></td><td>定时与自动化调度</td><td>自迭代循环的<b>触发器</b>（定时 / 事件驱动）</td></tr>
+<tr><td class="k"><code>agent_artifacts.py</code> / <code>agent_context_compression.py</code></td><td>工件持久化 + 上下文压缩</td><td>对应八爪鱼的<b>两层工件体系</b>，长管线跑得完的保障</td></tr>
+<tr><td class="k"><code>strategy_sdk.py</code></td><td>策略接口</td><td>变异算子的<b>操作面</b> —— 迭代改的就是它定义的策略</td></tr>
+<tr><td class="k">治理体系</td><td>9 条轨道、180 张 Issue、63 个规划对象、117 个控制任务</td><td>路由表与工单类型的<b>现成语义种子</b></td></tr>
+<tr><td class="k">数据只读契约</td><td><code>source_writes=0</code>，Mongo/MySQL 强制只读</td><td>直接继承。<b>自迭代系统更需要这条铁律</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>三、目标架构（完整形态）</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:12%">层</th><th style="width:24%">组件</th><th>职责</th><th style="width:10%">状态</th></tr></thead>
+<tbody>
+<tr><td class="k">入口层</td><td>Web Chat（统一入口）</td><td>会话对话 · 工单看板 · 审批操作 · 工件与回测结果浏览。Chat 是唯一操作面，看板与审批嵌在其中，不做成两套 UI</td><td><span class="badge b-near">新建</span></td></tr>
+<tr><td class="k">编排层</td><td>工单路由 + DAG 分解 + 会话隔离</td><td><code>Kind/*</code> 标签 → 路由表决定流水线；Epic/Feature 经 DAG 分解为任务图（节点=验收标准，边=跨会话契约）；并发工作各占独立 <code>git worktree</code></td><td><span class="badge b-near">新建</span></td></tr>
+<tr><td class="k">执行层</td><td>Agent 工作池</td><td>复用 <code>agent_model_loop</code>。协调者主会话 + Explorer（只读探索）/ Worker（多步执行）子代理。工具集：代码编辑、回测调用、数据查询、MCP。执行沙箱化，数据库只读</td><td><span class="badge b-ok">复用</span></td></tr>
+<tr><td class="k">门禁层</td><td>review-code · verify · <b>quant-gate</b></td><td>前两道借鉴八爪鱼（多维并行评审 + DoD 矩阵）。<b>第三道是本方案核心新增</b> —— 量化系统特有的验收门。三者不可跳过、不可裁剪、有轮次预算</td><td><span class="badge b-near">新建</span></td></tr>
+<tr><td class="k">数据层</td><td>Gitea + PostgreSQL + 回测产物库</td><td>Gitea 承载代码、工单、Wiki（人读档案）；PostgreSQL 存运行状态与任务；回测产物（净值曲线、因子 IC、DoD 矩阵）本地持久化</td><td><span class="badge b-ok">复用</span></td></tr>
+<tr><td class="k">模型层</td><td>DeepSeek（现状单供应商）</td><td>建议增加降级链与多供应商抽象 —— 自迭代循环会大幅放大调用量，单供应商既是被限流的风险，也是成本失控的风险</td><td><span class="badge b-ok">复用</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>四、核心难点：量化的"验收"和软件不一样</h2>
+<p>这是整个蓝图里最需要想清楚的部分 —— 八爪鱼没有现成答案，直接照搬会出事。</p>
+
+<div class="tw">
+<table>
+<thead><tr><th style="width:50%">普通软件的自迭代（八爪鱼的模型）</th><th>量化系统的自迭代（真实风险所在）</th></tr></thead>
+<tbody>
+<tr><td>验收 = 跑测试，绿灯即通过</td><td>验收 = 回测，但<b>回测绿灯 ≠ 策略有效</b></td></tr>
+<tr><td>"通过"是确定性的、可复现的</td><td>过拟合、前视偏差、幸存者偏差</td></tr>
+<tr><td>迭代越快 → 质量越高</td><td>迭代越快 → <b>过拟合越快</b></td></tr>
+<tr><td>评审看代码逻辑</td><td>评审必须看样本外与统计显著性</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="notice red">
+<b>最大风险：</b>自迭代系统会<b>极大地加速策略搜索</b>。在量化里，搜索得越快，过拟合来得越猛 —— 系统会很勤奋地为你找到一堆"历史上很美、未来会亏钱"的策略。因此 <code>quant-gate</code> 不是可选项，而是这套系统的<b>安全阀</b>，它的严格程度决定了系统是资产还是负债。
+</div>
+
+<h3>quant-gate 建议的检查项</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:18%">检查</th><th>做法</th><th style="width:12%">不通过</th></tr></thead>
+<tbody>
+<tr><td class="k">样本外验证</td><td>严格 IS/OOS 时间切分，<b>OOS 是唯一准入依据</b>，IS 表现仅供参考</td><td><span class="badge b-bad">拒绝</span></td></tr>
+<tr><td class="k">多重检验校正</td><td>Deflated Sharpe / PBO —— 记录本轮搜索了多少个变体并据此折算显著性</td><td><span class="badge b-bad">拒绝</span></td></tr>
+<tr><td class="k">前视审计</td><td>每个特征的数据时间戳必须早于决策时间戳，自动扫描</td><td><span class="badge b-bad">拒绝</span></td></tr>
+<tr><td class="k">滚动稳健性</td><td>滚动窗口重测，参数邻域扰动不塌陷</td><td><span class="badge b-part">降级</span></td></tr>
+<tr><td class="k">成本敏感性</td><td>滑点/费率 ×2 情景下仍成立</td><td><span class="badge b-part">降级</span></td></tr>
+<tr><td class="k">容量约束</td><td>给出策略可承载的资金规模上限</td><td><span class="badge b-part">降级</span></td></tr>
+<tr><td class="k">上线后衰减监控</td><td>滚动 IC / 回撤 / 换手漂移，退化超阈值即触发再迭代</td><td><span class="badge b-near">触发迭代</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>迭代闭环长什么样</h3>
+<div class="loop">
+  <div class="n"><div class="s">触发</div><div class="t">退化信号</div><div class="d">监控发现策略衰减，或定时探索</div></div>
+  <div class="n"><div class="s">分解</div><div class="t">生成实验工单</div><div class="d">假设 → 因子 → 回测 → 评审 的 DAG</div></div>
+  <div class="n"><div class="s">变异</div><div class="t">产生候选</div><div class="d">因子表达式 / 超参 / 组合权重 / 风控规则</div></div>
+  <div class="n gate"><div class="s">门禁</div><div class="t">quant-gate</div><div class="d">样本外 + 多重检验 + 前视审计</div></div>
+  <div class="n human"><div class="s">人工</div><div class="t">审批合并</div><div class="d">你看证据后决定是否入库</div></div>
+  <div class="n"><div class="s">监控</div><div class="t">上线跟踪</div><div class="d">滚动指标，回到起点</div></div>
+</div>
+
+<div class="notice blue">
+<b>设计要点：适应度函数不要用单一夏普。</b>建议多目标 + 硬约束：以 OOS 夏普、最大回撤、换手率、容量、稳健性共同打分，而把"前视=0"和"多重检验校正后仍显著"设为<b>硬约束</b> —— 硬约束不满足直接淘汰，不参与打分。否则系统会学会用极端换手或不可扩容的策略刷分，这正是过拟合的典型形态。
+</div>
+
+<h2>五、后续分阶段</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:10%">阶段</th><th style="width:16%">工期</th><th style="width:24%">内容</th><th>验收</th></tr></thead>
+<tbody>
+<tr><td class="k">P0–P1</td><td>第一部分</td><td class="k">地基 + 工单驱动</td><td>已简化为最小闭环：Linux 迁移、Gitea 权威源、Chat 骨架、单 Agent 执行、测试门禁、人工合并。<b>验收：Chat 输入需求 → 自动开出 PR</b></td></tr>
+<tr><td class="k">P2</td><td>3–5 周</td><td class="k">量化门禁 quant-gate</td><td>IS/OOS 切分、多重检验校正、前视审计、成本与容量敏感性、上线后衰减监控。这是投入产出比最高、也最不能省的一环。<b>验收：构造一个明显过拟合的策略，系统能拦下它并给出具体证据（而非笼统拒绝）</b></td></tr>
+<tr><td class="k">P3</td><td>持续</td><td class="k">自迭代闭环 + 人机决策门</td><td>变异算子、适应度函数、事件触发、审批流接入 Chat、工件两层体系、DAG 分解与多工单编排。<b>验收：某策略衰减后系统自动生成并验证一版改进，人工在 Chat 里看证据后一键合并</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="notice">
+<b>一个建议：</b>P2 的 quant-gate 建议<b>提前到 P1 并行做</b>。理由是：如果先跑通了自动迭代却没有门禁，系统会在你还没建立起信任的时候，先给你产出一批不可信的策略 —— 那比没有系统更糟。<b>先有刹车，再装引擎。</b>
+</div>
+
+<h2>六、完整形态的风险</h2>
+<div class="tw">
+<table>
+<thead><tr><th style="width:16%">风险</th><th style="width:30%">说明</th><th>对策</th></tr></thead>
+<tbody>
+<tr><td class="k">过拟合加速</td><td>系统越自动，搜到的假策略越多</td><td>quant-gate 是安全阀，<b>不得为速度放松</b></td></tr>
+<tr><td class="k">成本失控</td><td>迭代循环放大 token 消耗，DeepSeek 单供应商</td><td>预算闸 + 多供应商降级链 + 高频低价值环节用小模型</td></tr>
+<tr><td class="k">自动合并越界</td><td>一旦给实盘自动权，错误会被自动放大</td><td>业务决策永远人工；<b>实盘上线永不自动</b></td></tr>
+<tr><td class="k">数据写入事故</td><td>agent 误写生产库</td><td>继承现有 <code>source_writes=0</code> 只读契约，执行沙箱化</td></tr>
+<tr><td class="k">外网暴露</td><td>当前是 loopback，对外开放后攻击面扩大</td><td>必须 TLS + 强认证；管理面与业务面分离</td></tr>
+<tr><td class="k">治理双源</td><td>GitHub/Gitea 状态漂移</td><td>见本节决策 A：单一权威源，另一侧只读</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="foot">
+<p>万丰 AI 编程自迭代系统 · 建设方案 ｜ 2026-09-12</p>
+<p>依据：<code>wanfeng-agent-platform@项目管理/github/EIGHT_ARMS_WORKFLOW.md</code> · <code>回测平台/README.md</code> · <code>quant_engine/</code></p>
+<p>参考：eightarms.net（Octopus 工单驱动工作流）</p>
+</div>
+
+</div>
+</body>
+</html>
